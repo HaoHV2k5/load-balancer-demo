@@ -1,0 +1,27 @@
+server:
+  address: 127.0.0.1
+  port: ${PORT:8081}
+  shutdown: immediate
+
+spring:
+  application:
+    name: demo-service
+  main:
+    banner-mode: "off"
+
+demo:
+  instance-id: ${INSTANCE_ID:instance-1}
+
+management:
+  endpoints:
+    web:
+      base-path: /api/actuator
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  pattern:
+    console: "%d{HH:mm:ss.SSS} %-5level [%thread] %logger{30} - %msg%n"

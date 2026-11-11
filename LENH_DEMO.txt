@@ -1,0 +1,48 @@
+LỆNH DEMO LOAD BALANCING
+
+cd ~/workplace/mss301/demo_load_balancer
+
+LỆNH CHÍNH
+./demo.sh build                  # Build code
+./demo.sh up                     # Chạy 3 instance + gateway
+./demo.sh up --terminals         # Chạy demo + mở 4 cửa sổ log (macOS)
+./demo.sh requests 12            # Gửi 12 request, xem phân phối
+./demo.sh status                 # Xem health và danh sách instance khỏe
+./demo.sh crash 2                # Kill instance-2
+./demo.sh start 2                # Chạy lại instance-2
+./demo.sh verify                 # Kiểm thử tự động toàn bộ demo
+./demo.sh down                   # Dừng demo
+
+XEM LOG
+./demo.sh terminals              # Mở 4 cửa sổ log
+./demo.sh logs 1                 # Log instance-1 (đổi thành 2, 3, gateway)
+./demo.sh logs --requests-only   # Chỉ xem log xử lý request
+Ctrl+C: thoát xem log, service vẫn chạy.
+
+SLIDE 8 — ROUND ROBIN
+./demo.sh up --terminals
+./demo.sh requests 12
+Kỳ vọng: luân phiên 1 → 2 → 3; phân phối 4/4/4.
+
+SLIDE 9 — FAILURE & RECOVERY
+./demo.sh crash 2
+./demo.sh status
+# Chờ Gateway eligible còn instance-1 và instance-3.
+./demo.sh requests 12
+# Kỳ vọng: luân phiên 1 → 3; phân phối 6/6.
+./demo.sh start 2
+./demo.sh status
+# Chờ Gateway eligible có đủ 3 instance.
+./demo.sh requests 12
+# Kỳ vọng: phân phối lại 4/4/4, không restart gateway.
+./demo.sh down
+
+API
+http://localhost:8080/api/hello
+http://localhost:8080/api/demo/instances
+http://localhost:8081/api/actuator/health
+
+LƯU Ý
+- Sau khi sửa code: down → build → up --terminals.
+- Health check mỗi 2 giây; ngay sau crash có thể có lỗi tạm thời.
+- Nếu đang chạy Java thủ công, Ctrl+C các process đó trước khi dùng up.
