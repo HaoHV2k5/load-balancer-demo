@@ -128,7 +128,7 @@ Gateway giữ nguyên `/api/hello` khi chuyển đến backend; route không dù
 
 Trong `lb://demo-service`, `lb` viết tắt của **Load Balancer**. `demo-service` là tên nhóm backend khai báo dưới `spring.cloud.discovery.client.simple.instances`, đồng thời khớp `name` trong `@LoadBalancerClient`. Thuộc tính `id` của route chỉ là tên quy tắc và có thể đặt khác.
 
-## Slide 8 — Round Robin Load Balancing Demo
+## Demo Round Robin Load Balancing
 
 ### 1. Starting Multiple Service Instances
 
@@ -178,7 +178,7 @@ Kiểm tra cả **thứ tự lặp vòng** và **số lượng chia đều**: `1
 
 Gateway mới khởi động được cấu hình bắt đầu từ instance-1. Nếu đã gửi request trước đó, đợt tiếp theo có thể bắt đầu ở instance-2 hoặc instance-3; vẫn đúng Round Robin. Khi danh sách khỏe thay đổi, không yêu cầu vòng mới bắt đầu từ instance-1. Để quan sát rõ thứ tự, tránh gửi request từ terminal khác đồng thời.
 
-## Slide 9 — Instance Failure & Recovery Demo
+## Demo Instance Failure & Recovery
 
 ### 1. Simulating Instance Failure
 
@@ -226,7 +226,7 @@ curl -s http://localhost:8080/api/demo/instances
 
 Sau khi `Gateway eligible` có đủ ba instance trở lại, 12 request tiếp theo chia **4/4/4**. Không restart gateway. Counter instance-2 bắt đầu lại vì đó là một JVM mới.
 
-## Kiểm chứng tự động cả hai slide
+## Kiểm chứng tự động
 
 ```bash
 ./demo.sh verify

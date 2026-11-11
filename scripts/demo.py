@@ -319,9 +319,9 @@ def verify():
     up()
     all_instances = {"instance-1", "instance-2", "instance-3"}
     try:
-        print("\n=== Slide 8: 12 requests / 3 instances ===", flush=True)
+        print("\n=== Round Robin: 12 requests / 3 instances ===", flush=True)
         requests(12, 0.25, all_instances)
-        print("\n=== Slide 9: kill instance-2, wait for health check ===", flush=True)
+        print("\n=== Failure: kill instance-2, wait for health check ===", flush=True)
         stop("2", crash=True)
         wait_eligible({"instance-1", "instance-3"})
         requests(8, 0.25, {"instance-1", "instance-3"})

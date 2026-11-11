@@ -19,12 +19,12 @@ XEM LOG
 ./demo.sh logs --requests-only   # Chỉ xem log xử lý request
 Ctrl+C: thoát xem log, service vẫn chạy.
 
-SLIDE 8 — ROUND ROBIN
+DEMO ROUND ROBIN
 ./demo.sh up --terminals
 ./demo.sh requests 12
 Kỳ vọng: luân phiên 1 → 2 → 3; phân phối 4/4/4.
 
-SLIDE 9 — FAILURE & RECOVERY
+DEMO FAILURE & RECOVERY
 ./demo.sh crash 2
 ./demo.sh status
 # Chờ Gateway eligible còn instance-1 và instance-3.
