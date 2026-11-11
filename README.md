@@ -11,17 +11,90 @@ Client → Gateway :8080 ────────┼─ instance-2 :8082 ─ /ap
 
 Đây là client-side load balancing ở gateway: gateway chọn backend rồi proxy HTTP request. Danh sách địa chỉ đăng ký tĩnh bằng `SimpleDiscoveryClient`; trạng thái sống/chết được kiểm tra động. Mỗi instance là một JVM riêng, chạy cùng JAR với port và tên khác nhau. Các ứng dụng chỉ bind `127.0.0.1` để trình diễn trên máy local.
 
-## Chạy nhanh
+## Cài đặt
 
-Cần **JDK 17+**, **Maven 3.6.3+**, **Python 3.9+** và Bash (macOS/Linux/WSL). Python chỉ điều khiển process và gửi HTTP request; gateway và service đều viết bằng Java/Spring. Lần build đầu cần Internet tải dependency Maven.
+### 1. Chuẩn bị môi trường
+
+| Công cụ | Yêu cầu | Mục đích |
+| --- | --- | --- |
+| JDK | 17 trở lên; có thể dùng JDK 21 | Build và chạy ứng dụng Spring |
+| Maven | 3.6.3 trở lên | Tải dependency, build và chạy test |
+| Python | 3.9 trở lên | Chạy script điều khiển demo |
+| Git | Có lệnh `git` | Clone repository |
+| Bash | macOS, Linux hoặc WSL trên Windows | Chạy `demo.sh` |
+
+Nếu chưa có công cụ, cài theo hướng dẫn chính thức: [JDK (Eclipse Temurin)](https://adoptium.net/installation/), [Maven](https://maven.apache.org/install.html), [Python](https://www.python.org/downloads/). Thiết lập `JAVA_HOME` trỏ đến thư mục JDK nếu cần và bảo đảm các lệnh có trong `PATH`. Trên Windows, chạy script trong WSL với các công cụ được cài bên trong WSL.
+
+Kiểm tra môi trường bằng terminal mới:
+
+```bash
+java -version
+mvn -v
+python3 --version
+git --version
+```
+
+Python chỉ dùng thư viện chuẩn, không cần `pip install`. Gateway và service đều viết bằng Java/Spring. Lần build đầu cần Internet tải dependency Maven; các cổng `8080–8083` cần trống.
+
+### 2. Tải mã nguồn
+
+```bash
+git clone https://github.com/HaoHV2k5/load-balancer-demo.git
+cd load-balancer-demo
+chmod +x demo.sh
+```
+
+Nếu đã có mã nguồn, mở terminal tại thư mục gốc chứa `pom.xml` và `demo.sh`. Các lệnh bên dưới đều chạy từ thư mục này.
+
+### 3. Build project
 
 ```bash
 ./demo.sh build
+```
+
+Lệnh trên chạy `mvn package`, bao gồm unit test, và tạo hai file:
+
+```text
+demo-service/target/demo-service.jar
+gateway/target/gateway.jar
+```
+
+Build thành công hiển thị `BUILD SUCCESS`. Có thể dùng trực tiếp `mvn package` nếu không dùng script.
+
+## Chạy ứng dụng (Run)
+
+```bash
 ./demo.sh up
 ./demo.sh status
 ```
 
-`up` tự build nếu chưa có JAR. Sau khi sửa code, chạy `down`, `build`, rồi `up` để dùng bản mới. Các cổng `8080–8083` cần trống.
+`up` chạy nền ba instance ở `8081/8082/8083` và gateway ở `8080`, sau đó chờ health check. Khi sẵn sàng, terminal hiển thị `Demo ready`; `status` có đủ bốn ứng dụng `UP` và ba backend trong `Gateway eligible`.
+
+Trên macOS, có thể thay lệnh `up` bằng lệnh sau để tự mở bốn cửa sổ log:
+
+```bash
+./demo.sh up --terminals
+```
+
+`up` tự build nếu chưa có JAR. Sau khi sửa code hoặc YAML, chạy lần lượt `./demo.sh down`, `./demo.sh build`, rồi `./demo.sh up` để dùng bản mới. Nếu đang chạy Java thủ công, Ctrl+C các process đó trước khi dùng `up`.
+
+## Hướng dẫn sử dụng (HDSD)
+
+| Lệnh | Công dụng |
+| --- | --- |
+| `./demo.sh requests 12` | Gửi 12 request qua gateway và thống kê phân phối |
+| `./demo.sh status` | Xem health và danh sách backend gateway đang dùng |
+| `./demo.sh logs --requests-only` | Theo dõi log xử lý request của các backend |
+| `./demo.sh logs 1` | Xem log instance-1; có thể đổi thành `2`, `3`, `gateway` |
+| `./demo.sh terminals` | Mở bốn cửa sổ log trên macOS khi demo đã chạy |
+| `./demo.sh crash 2` | Kill đột ngột instance-2 |
+| `./demo.sh stop 2` | Dừng instance-2 bằng SIGTERM |
+| `./demo.sh start 2` | Chạy lại instance-2 |
+| `./demo.sh verify` | Tự động kiểm tra Round Robin, failure và recovery |
+| `./demo.sh down` | Dừng các JVM do script tạo |
+| `./demo.sh --help` | Xem các lệnh hỗ trợ |
+
+Gọi API bằng trình duyệt, Postman hoặc curl:
 
 ```bash
 curl -s http://localhost:8080/api/hello
@@ -187,6 +260,18 @@ java -jar gateway/target/gateway.jar
 ```
 
 Hoặc tạo ba run configuration cho `DemoServiceApplication` với các program argument tương ứng, và một cho `GatewayApplication`. Ctrl+C terminal instance-2 để dừng, chạy lại cùng lệnh để recovery. Các lệnh `requests`/`status` vẫn dùng được; `start`/`stop`/`crash`/`down` quản lý process do script tạo, nên hãy thao tác lifecycle trong terminal/IDE nếu chạy thủ công. Dùng `verify` với các process do script tạo.
+
+## Xử lý lỗi thường gặp
+
+| Hiện tượng | Cách xử lý |
+| --- | --- |
+| `java`, `mvn` hoặc `python3`: command not found | Cài công cụ tương ứng, kiểm tra `PATH`, mở lại terminal |
+| `Permission denied` khi chạy `demo.sh` | Chạy `chmod +x demo.sh` |
+| `Unable to access jarfile` | Build trước và chạy lệnh Java từ thư mục gốc; nếu đang ở `demo-service/target`, dùng `java -jar demo-service.jar` |
+| Port `8080–8083` đang được sử dụng | Dừng demo bằng `down`; với JVM chạy thủ công, Ctrl+C tại terminal tương ứng |
+| Chỉ thấy `da chay` hoặc báo đang chạy bản cũ | Chạy `down`, `build`, rồi `up`; process còn sống chưa đồng nghĩa health endpoint đã sẵn sàng |
+| Không thấy cửa sổ log | Trên macOS dùng `./demo.sh terminals`; có thể xem ngay trong terminal hiện tại bằng `./demo.sh logs` |
+| Request lỗi ngay sau khi kill instance | Chờ `status` loại instance chết khỏi `Gateway eligible`, rồi gửi lại request |
 
 ## Các file chính
 
