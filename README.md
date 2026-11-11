@@ -1,4 +1,4 @@
-# Spring Load Balancing Demo — Slide 8 & 9
+# Spring Load Balancing Demo
 
 Demo chạy thật với **Spring Boot 3.5.16**, **Spring Cloud Gateway**, **Spring Cloud LoadBalancer** và **Actuator**. Không cần Docker, Eureka hay database.
 
